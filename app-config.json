@@ -1,0 +1,17 @@
+{
+    "categories": {
+        "arbitrary": [
+            "review",
+            "tutorial",
+            "walkthrough",
+            "guide",
+            "tournament",
+            "new",
+            "showcase",
+            "preview"
+        ]
+    },
+    "brainjs": {
+        "maxLengthInput": 50
+    }
+}
