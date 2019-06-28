@@ -4,7 +4,5 @@
 
 # Exclude dependencies
 node_modules/
-data/
 dist/
 V-G-Platform-service-acct.json
-.vscode
