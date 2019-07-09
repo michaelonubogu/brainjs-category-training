@@ -17,6 +17,6 @@ export interface CategoryTrainingData extends VideoGameTrainingData {
 }
 
 export interface TrainingData {
-    input: number[];
-    output: any;
+    input: string;
+    output: string;
 }

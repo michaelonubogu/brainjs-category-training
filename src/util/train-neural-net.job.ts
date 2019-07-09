@@ -16,13 +16,14 @@ export class TrainNeuralNetJobService implements OnApplicationBootstrap {
     private brain;
 
     public onApplicationBootstrap() {
-        this.trainCategoryNeuralNet();
+        // this.trainCategoryNeuralNet();
+        this.trainsCategoryNeuralNet2();
     }
 
     public async trainCategoryNeuralNet(): Promise<StatusMessage> {
         return new Promise(async (resolve, reject) => {
             try {
-                const categoryNeuralNet: brainjs.NeuralNetwork = new brainjs.NeuralNetwork();
+                const categoryNeuralNet = new brainjs.recurrent.LSTM();
                 let iterations: number = 1;
 
                 const trainStreamOptions: ITrainStreamOptionsLocal = {
@@ -62,39 +63,76 @@ export class TrainNeuralNetJobService implements OnApplicationBootstrap {
         });
     }
 
+    public async trainsCategoryNeuralNet2(): Promise<StatusMessage> {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const data = await this.readCategoryInputData();
+                const options: brainjs.IRNNDefaultOptions = {};
+                const categoryNeuralNet = new brainjs.recurrent.LSTM();
+                categoryNeuralNet.train(data, {
+                    log: true
+                });
+                const neuralNetJSONExport = categoryNeuralNet.toJSON();
+                await this
+                    .saveNeuralNetToFile(JSON.stringify(neuralNetJSONExport), `${appRoot}/data/neural-network-category.json`);
+                resolve({ status: 'Complete', message: 'Done training' });
+            } catch (err) {
+                resolve({ status: 'Failed', message: 'Done training' });
+            }
+        });
+    }
+
     private prepInputData(data: CategoryTrainingData): TrainingData[] {
 
         const returnData: TrainingData[] = [];
-        const output: any = {};
         const categoryScrub = data.category.replace(' ', '_');
 
-        output[categoryScrub] = 1;
+        // output[categoryScrub] = 1;
 
-        let titleArr: number[] = UtilService.tokenizeString(data.title);
-        let textArr: number[] = UtilService.tokenizeString(data.text);
+        // let titleArr: number[] = UtilService.tokenizeString(data.title);
+        // let textArr: number[] = UtilService.tokenizeString(data.text);
 
         // make sure we don't exceed the length of our array length limit when encoded
-        titleArr = titleArr.length > appConfig.brainjs.maxLengthInput
+        /*titleArr = titleArr.length > appConfig.brainjs.maxLengthInput
             ? titleArr.slice(0, appConfig.brainjs.maxLengthInput)
             : UtilService.setInputLengthToLimit(titleArr, appConfig.brainjs.maxLengthInput);
 
         textArr = textArr.length > appConfig.brainjs.maxLengthInput
             ? textArr.slice(0, appConfig.brainjs.maxLengthInput)
-            : UtilService.setInputLengthToLimit(textArr, appConfig.brainjs.maxLengthInput);
+            : UtilService.setInputLengthToLimit(textArr, appConfig.brainjs.maxLengthInput);*/
 
         // 2 entries into our data -> (1) for title (2) for text
         // NOTE: just title (for now) - until we I can get this to work
         returnData.push({
-            input: titleArr,
-            output,
+            input: data.title,
+            output: categoryScrub,
         });
 
-        /*returnData.push({
-            input: textArr,
-            output
-        });*/
-
         return returnData;
+    }
+
+    private readCategoryInputData() {
+        return new Promise((resolve, reject) => {
+            const trainingData: any[] = [];
+            const readStream = fs
+                .createReadStream(`${appRoot}/data/category-training-data.json`);
+
+            oboe(readStream)
+                .node('!.*', ((data) => {
+                    const parsedData = JSON.parse(data);
+                    const inputData: TrainingData[] = this.prepInputData(parsedData);
+                    inputData.forEach(d => {
+                        trainingData.push(d);
+                    });
+                    return oboe.drop;
+                }).bind(this))
+                .fail((result) => {
+                    reject(result);
+                })
+                .done((empty: any) => {
+                    resolve(trainingData);
+                });
+        });
     }
 
     private readCategoryInputDataForTraining(trainStream: brainjs.TrainStream) {
