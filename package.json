@@ -31,7 +31,7 @@
     "brain.js": "^1.6.1",
     "cheerio": "^1.0.0-rc.2",
     "date-fns": "^1.30.1",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "giantbomb": "^2.0.2",
     "igdb-api-node": "^3.1.7",
     "kue": "^0.11.6",
